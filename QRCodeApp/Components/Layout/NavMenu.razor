@@ -1,0 +1,77 @@
+﻿@using System.Globalization
+@inject IJSRuntime JsRuntime
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">QRCodeApp</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        @* <div class="nav-item px-3"> *@
+        @*     <NavLink class="nav-link" href="counter"> *@
+        @*         <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter *@
+        @*     </NavLink> *@
+        @* </div> *@
+        @* <div class="nav-item px-3"> *@
+        @*     <NavLink class="nav-link" href="weather"> *@
+        @*         <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather *@
+        @*     </NavLink> *@
+        @* </div> *@
+        <div class="nav-item px-3">
+            <select @onchange="OnLocaleChanged" class="form-select">
+                @foreach (var locale in SupportedLocales)
+                {
+                    <option value="@locale" selected="@IsSelected(locale)">@locale.DisplayName</option>
+                }
+            </select>
+        </div>
+    </nav>
+</div>
+
+@code {
+
+    private IEnumerable<CultureInfo> SupportedLocales { get; set; } = new List<CultureInfo>
+    {
+        new("en-US"),
+        new("el-GR")
+    };
+
+    private CultureInfo CurrentCulture { get; set; } = null!;
+    
+    
+    protected override void OnInitialized()
+    {
+        CurrentCulture = CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture;
+    }
+
+    private async Task OnLocaleChanged(ChangeEventArgs e)
+    {
+        var newCulture = e.Value?.ToString();
+        if (newCulture != null)
+        {
+            var selectedCulture = new CultureInfo(newCulture);
+            Thread.CurrentThread.CurrentCulture = selectedCulture;
+            Thread.CurrentThread.CurrentUICulture = selectedCulture;
+            CultureInfo.DefaultThreadCurrentCulture = selectedCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = selectedCulture;
+            CurrentCulture = selectedCulture;
+            Preferences.Set("language", selectedCulture.Name);
+            await JsRuntime.InvokeVoidAsync("location.reload");
+        }
+    }
+
+    private bool IsSelected(CultureInfo locale)
+    {
+        return locale.Name == CurrentCulture.Name;
+    }
+
+}

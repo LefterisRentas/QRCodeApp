@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="InsertText" xml:space="preserve">
+        <value>Enter text that will be used to generate the QR Code.</value>
+    </data>
+    <data name="QRCodeGenerator" xml:space="preserve">
+        <value>QR Code Generator App</value>
+    </data>
+    <data name="GenerateQRCode" xml:space="preserve">
+        <value>Generate QR Code</value>
+    </data>
+    <data name="SaveQRCode" xml:space="preserve">
+        <value>Save QR Code</value>
+    </data>
+    <data name="SavedQRCodes" xml:space="preserve">
+        <value>Saved QR Codes</value>
+    </data>
+    <data name="Delete" xml:space="preserve">
+        <value>Delete</value>
+    </data>
+    <data name="Regenerate" xml:space="preserve">
+        <value>Load Saved QR Code Entry</value>
+    </data>
+    <data name="NoSavedQRCodes" xml:space="preserve">
+        <value>No saved QR codes.</value>
+    </data>
+    <data name="EnterQRCodeName" xml:space="preserve">
+        <value>Enter QR Code Entry Name To Save</value>
+    </data>
+    <data name="Save" xml:space="preserve">
+        <value>Save</value>
+    </data>
+    <data name="Cancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="DownloadQRCode" xml:space="preserve">
+        <value>Save QR Code as picture on the device</value>
+    </data>
+</root>

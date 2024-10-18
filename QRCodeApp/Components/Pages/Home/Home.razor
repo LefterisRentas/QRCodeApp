@@ -1,0 +1,191 @@
+﻿@page "/"
+@using Microsoft.Extensions.Localization
+@using QRCodeApp.Core
+@using QRCodeApp.Data
+@using QRCodeApp.Services
+@using QRCoder
+@inject QRCodeGenerator QrCodeGenerator
+@inject QrCodeService QrCodeService
+@inject IStringLocalizer<Home> Localizer
+@inject IFileSaver FileSaver
+
+<div class="container d-flex flex-column align-items-center justify-content-center text-center mt-5">
+    <h1 class="mb-4">@Localizer["QRCodeGenerator"]</h1>
+
+    <div class="form-group w-100 w-md-50">
+        <label for="qrTextInput" class="form-label">@Localizer["InsertText"]</label>
+        <input id="qrTextInput" type="text" @bind="Text" class="form-control mb-3" placeholder="@Localizer["Enter your text"]"/>
+    </div>
+
+    <button class="btn btn-primary mb-4" @onclick="() => ImageBase64 = GenerateBase64Png(Text)">
+        @Localizer["GenerateQRCode"]
+    </button>
+
+    @if (!string.IsNullOrEmpty(ImageBase64))
+    {
+        <div class="mt-4">
+            <img src="@($"data:image/png;base64,{ImageBase64}")" alt="QR Code" class="img-fluid rounded" style="max-width: 50%; height: 50%;"/>
+        </div>
+
+        <button class="btn btn-success mt-3" @onclick="OpenSaveModal"><i class="bi bi-floppy2"></i>@Localizer["SaveQRCode"]</button>
+        <button class="btn btn-success mt-3" @onclick="SaveQrCodeToDevice">
+            <i class="bi bi-download"></i>
+            @Localizer["DownloadQRCode"]
+        </button>
+    }
+
+    <!-- Modal -->
+    <div class="modal" tabindex="-1" style="display:@(IsModalVisible ? "block" : "none");">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Localizer["SaveQRCode"]</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="qrCodeName" class="form-label">@Localizer["EnterQRCodeName"]</label>
+                    <input id="qrCodeName" type="text" @bind="QrCodeName" class="form-control" placeholder="@Localizer["EnterQRCodeName"]"/>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">@Localizer["Cancel"]</button>
+                    <button class="btn btn-primary" @onclick="SaveQrCode">@Localizer["Save"]</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="mt-5">@Localizer["SavedQRCodes"]</h2>
+
+    <div class="mt-3">
+        @if (QrCodes.Any())
+        {
+        <div class="card-group">
+            @foreach (var qr in QrCodes)
+            {
+                <div class="card shadow-sm h-100 d-flex flex-column">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title">@qr.Name</h5>
+                            <p class="card-text text-muted">@qr.Value</p>
+                        </div>
+                        <div class="d-flex justify-content-between mt-auto">
+                            <button class="btn btn-danger btn-sm d-flex align-items-center" @onclick="() => OnDelete(qr.Name)">
+                                <i class="bi bi-trash me-1"></i>@Localizer["Delete"]
+                            </button>
+                            <button class="btn btn-primary btn-sm d-flex align-items-center mx-1" @onclick="() => ImageBase64 = qr.QrCodeBase64">
+                                <i class="bi bi-arrow-clockwise me-1"></i>@Localizer["Regenerate"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        }
+        else
+        {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>@Localizer["NoSavedQRCodes"]
+        </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string Text { get; set; } = string.Empty;
+    private string ImageBase64 { get; set; } = string.Empty;
+    private string QrCodeName { get; set; } = string.Empty;
+    private List<QrCodeDto> QrCodes { get; set; } = new List<QrCodeDto>();
+    private bool IsModalVisible { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        QrCodes = await GetQrCodes();
+    }
+
+    private string GenerateBase64Png(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+        var qrCodeData = QrCodeGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
+        var qrCode = new PngByteQRCode(qrCodeData);
+        var qrCodeImage = qrCode.GetGraphic(20);
+        return Convert.ToBase64String(qrCodeImage);
+    }
+
+    private void OpenSaveModal()
+    {
+        IsModalVisible = true;
+    }
+
+    private void CloseModal()
+    {
+        IsModalVisible = false;
+    }
+
+    private async Task SaveQrCode()
+    {
+        if (!string.IsNullOrEmpty(QrCodeName) && !string.IsNullOrEmpty(Text))
+        {
+            await OnSave(QrCodeName, Text, ImageBase64);
+            CloseModal();
+        }
+    }
+
+    private async Task OnSave(string name, string stringValue, string imageBase64)
+    {
+        if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(stringValue))
+        {
+            var entry = new QrCodeEntry
+            {
+                Name = name,
+                Value = stringValue,
+                QrCodeBase64 = imageBase64
+            };
+            await QrCodeService.SaveOrUpdateQrCodeAsync(entry);
+            QrCodes = await GetQrCodes(); // Refresh list after saving
+        }
+    }
+
+    private async Task OnDelete(string name)
+    {
+        await QrCodeService.DeleteQrCodeByNameAsync(name);
+        QrCodes = await GetQrCodes(); // Refresh list after deletion
+    }
+
+    private async Task<List<QrCodeDto>> GetQrCodes()
+    {
+        var qrCodes = await QrCodeService.GetAllQrCodesAsync();
+        return qrCodes.Select(QrCodeDto.FromQrCodeEntry).ToList();
+    }
+    
+    private async Task SaveQrCodeToDevice()
+    {
+        if (!string.IsNullOrEmpty(ImageBase64))
+        {
+            var qrCodeBytes = Convert.FromBase64String(ImageBase64);
+            await FileSaver.SaveFileAsync($"{(!string.IsNullOrWhiteSpace(QrCodeName) ? QrCodeName : Text)}-QrCode.png", qrCodeBytes);
+        }
+    }
+
+    private class QrCodeDto
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public string QrCodeBase64 { get; set; }
+
+        private QrCodeDto(string name, string value, string qrCodeBase64)
+        {
+            Name = name;
+            Value = value;
+            QrCodeBase64 = qrCodeBase64;
+        }
+
+        public static QrCodeDto FromQrCodeEntry(QrCodeEntry entry)
+        {
+            return new QrCodeDto(entry.Name, entry.Value, entry.QrCodeBase64);
+        }
+    }
+
+}

@@ -104,7 +104,7 @@ The **QR Code App** is a cross-platform application built with **.NET MAUI** and
 
 ## License
 
-This project is licensed under the **MIT License**. See the [LICENSE.md](LICENSE.md) file for more information.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for more information.
 
 ## Acknowledgements
 
